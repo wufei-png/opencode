@@ -1224,6 +1224,10 @@ export type Config = {
     ignore?: Array<string>
   }
   plugin?: Array<string>
+  /**
+   * Restrict the folder picker to only show these directories. Supports absolute paths and ~ for home directory. When not set, all directories are shown.
+   */
+  allowed_folders?: Array<string>
   snapshot?: boolean
   /**
    * Control sharing behavior:'manual' allows manual sharing via commands, 'auto' enables automatic sharing, 'disabled' disables all sharing

@@ -31,6 +31,44 @@ export function DialogSelectDirectory(props: DialogSelectDirectoryProps) {
 
   let list: ListRef | undefined
 
+  const allowedFolders = createMemo(() => sync.data.config.allowed_folders)
+
+  /**
+   * Resolve allowed_folders entries to absolute paths (expand ~ to home).
+   * Returns undefined when no restriction is configured.
+   */
+  const resolvedAllowedFolders = createMemo(() => {
+    const folders = allowedFolders()
+    if (!folders || folders.length === 0) return undefined
+    const h = sync.data.path.home || ""
+    return folders.map((f) => {
+      let resolved = f.replaceAll("\\", "/")
+      if (resolved === "~") resolved = h
+      else if (resolved.startsWith("~/")) resolved = h + resolved.slice(1)
+      return resolved.replace(/\/+$/, "")
+    }).filter(Boolean)
+  })
+
+  /**
+   * Check if a path should be visible given allowed_folders.
+   * A path is visible if:
+   * - It equals an allowed folder
+   * - It is a descendant of an allowed folder (inside it)
+   * - It is an ancestor of an allowed folder (so user can navigate into it)
+   */
+  function isPathAllowed(absolute: string) {
+    const allowed = resolvedAllowedFolders()
+    if (!allowed) return true
+    const p = absolute.toLowerCase()
+    for (const a of allowed) {
+      const al = a.toLowerCase()
+      if (p === al) return true
+      if (p.startsWith(al + "/")) return true
+      if (al.startsWith(p + "/")) return true
+    }
+    return false
+  }
+
   const missingBase = createMemo(() => !(sync.data.path.home || sync.data.path.directory))
 
   const [fallbackPath] = createResource(
@@ -255,7 +293,8 @@ export function DialogSelectDirectory(props: DialogSelectDirectoryProps) {
 
   const items = async (value: string) => {
     const results = await directories(value)
-    return results.map(row)
+    const filtered = resolvedAllowedFolders() ? results.filter(isPathAllowed) : results
+    return filtered.map(row)
   }
 
   function resolve(absolute: string) {

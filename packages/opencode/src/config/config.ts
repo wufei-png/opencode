@@ -1020,6 +1020,12 @@ export namespace Config {
         })
         .optional(),
       plugin: z.string().array().optional(),
+      allowed_folders: z
+        .array(z.string())
+        .optional()
+        .describe(
+          "Restrict the folder picker to only show these directories. Supports absolute paths and ~ for home directory. When not set, all directories are shown.",
+        ),
       snapshot: z.boolean().optional(),
       share: z
         .enum(["manual", "auto", "disabled"])

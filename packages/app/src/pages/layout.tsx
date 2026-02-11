@@ -1170,15 +1170,35 @@ export default function Layout(props: ParentProps) {
 
   const showEditProjectDialog = (project: LocalProject) => dialog.show(() => <DialogEditProject project={project} />)
 
+  function isFolderAllowed(dir: string) {
+    const folders = globalSync.data.config.allowed_folders
+    if (!folders || folders.length === 0) return true
+    const h = globalSync.data.path.home || ""
+    const allowed = folders
+      .map((f) => {
+        let resolved = f.replaceAll("\\", "/")
+        if (resolved === "~") resolved = h
+        else if (resolved.startsWith("~/")) resolved = h + resolved.slice(1)
+        return resolved.replace(/\/+$/, "")
+      })
+      .filter(Boolean)
+    const p = dir.toLowerCase()
+    return allowed.some((a) => {
+      const al = a.toLowerCase()
+      return p === al || p.startsWith(al + "/")
+    })
+  }
+
   async function chooseProject() {
     function resolve(result: string | string[] | null) {
       if (Array.isArray(result)) {
-        for (const directory of result) {
+        const dirs = result.filter(isFolderAllowed)
+        for (const directory of dirs) {
           openProject(directory, false)
         }
-        navigateToProject(result[0])
+        if (dirs[0]) navigateToProject(dirs[0])
       } else if (result) {
-        openProject(result)
+        if (isFolderAllowed(result)) openProject(result)
       }
     }
 

@@ -23,8 +23,34 @@ export default function Home() {
   const server = useServer()
   const language = useLanguage()
   const homedir = createMemo(() => sync.data.path.home)
+
+  const resolvedAllowedFolders = createMemo(() => {
+    const folders = sync.data.config.allowed_folders
+    if (!folders || folders.length === 0) return undefined
+    const h = sync.data.path.home || ""
+    return folders
+      .map((f) => {
+        let resolved = f.replaceAll("\\", "/")
+        if (resolved === "~") resolved = h
+        else if (resolved.startsWith("~/")) resolved = h + resolved.slice(1)
+        return resolved.replace(/\/+$/, "")
+      })
+      .filter(Boolean)
+  })
+
+  function isFolderAllowed(dir: string) {
+    const allowed = resolvedAllowedFolders()
+    if (!allowed) return true
+    const p = dir.toLowerCase()
+    return allowed.some((a) => {
+      const al = a.toLowerCase()
+      return p === al || p.startsWith(al + "/")
+    })
+  }
+
   const recent = createMemo(() => {
     return sync.data.project
+      .filter((p) => isFolderAllowed(p.worktree))
       .toSorted((a, b) => (b.time.updated ?? b.time.created) - (a.time.updated ?? a.time.created))
       .slice(0, 5)
   })
@@ -39,10 +65,10 @@ export default function Home() {
     function resolve(result: string | string[] | null) {
       if (Array.isArray(result)) {
         for (const directory of result) {
-          openProject(directory)
+          if (isFolderAllowed(directory)) openProject(directory)
         }
       } else if (result) {
-        openProject(result)
+        if (isFolderAllowed(result)) openProject(result)
       }
     }
 
