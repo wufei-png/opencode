@@ -117,6 +117,22 @@ export namespace Server {
                 return input
               }
 
+              // Allow private IP addresses (10.x.x.x, 192.168.x.x, 172.16-31.x.x)
+              // This is useful for development when accessing from other machines on the same network
+              try {
+                const url = new URL(input)
+                const hostname = url.hostname
+                if (
+                  hostname.startsWith("10.") ||
+                  hostname.startsWith("192.168.") ||
+                  /^172\.(1[6-9]|2[0-9]|3[01])\./.test(hostname)
+                ) {
+                  return input
+                }
+              } catch {
+                // Invalid URL, ignore
+              }
+
               return
             },
           }),

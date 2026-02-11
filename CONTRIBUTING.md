@@ -114,7 +114,33 @@ To test UI changes during development:
 bun run --cwd packages/app dev
 ```
 
-This starts a local dev server at http://localhost:5173 (or similar port shown in output). Most UI changes can be tested here, but the server must be running for full functionality.
+This starts a local dev server at http://localhost:3000 (or similar port shown in output). Most UI changes can be tested here, but the server must be running for full functionality.
+
+The web app automatically connects to the OpenCode server based on the current hostname. In development mode:
+
+- **If `VITE_OPENCODE_SERVER_HOST` is set**: Uses that hostname with the specified port
+- **If not set**: Automatically uses the current page's hostname (e.g., if accessing via `10.9.42.44:3000`, it will connect to `10.9.42.44:4096`)
+
+**To run both server and web app on the same hostname:**
+
+```bash
+# Terminal 1: Start OpenCode server on specific hostname
+bun dev serve --hostname 10.9.42.44 --port 4096
+
+# Terminal 2: Start web app on the same hostname
+VITE_HOSTNAME=10.9.42.44 bun run --cwd packages/app dev
+```
+
+The web app will automatically connect to `http://10.9.42.44:4096` when accessed from `http://10.9.42.44:3000`.
+
+**To override the server connection manually:**
+
+```bash
+# Explicitly set server hostname and port
+VITE_OPENCODE_SERVER_HOST=10.9.42.44 VITE_OPENCODE_SERVER_PORT=4096 bun run --cwd packages/app dev
+```
+
+**About `VITE_HOSTNAME`:** This sets the hostname that the Vite dev server listens on (where the web app is accessible). Use this when you want to access the web app from a specific IP address like `10.9.42.44`.
 
 ### Running the Desktop App
 
@@ -149,6 +175,54 @@ This runs `bun run --cwd packages/desktop build` automatically via Tauri’s `be
 > If you make changes to the API or SDK (e.g. `packages/opencode/src/server/server.ts`), run `./script/generate.ts` to regenerate the SDK and related files.
 
 Please try to follow the [style guide](./AGENTS.md)
+
+### Configuring MCP Servers in Development
+
+When developing OpenCode, you can configure MCP servers in your global config file at `~/.config/opencode/opencode.json` (or `opencode.jsonc`).
+
+**Important notes:**
+
+1. **Config file location**: The global config is loaded from `~/.config/opencode/opencode.json` or `~/.config/opencode/opencode.jsonc`
+2. **Restart required**: After modifying the config file, you must restart the OpenCode server for changes to take effect
+3. **Config format**: Use JSON or JSONC format. Example:
+
+```jsonc title="~/.config/opencode/opencode.json"
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "my-mcp-server": {
+      "type": "local",
+      "command": ["npx", "-y", "@modelcontextprotocol/server-everything"],
+      "enabled": true
+    }
+  }
+}
+```
+
+**Verify your configuration:**
+
+1. **Check if config is loaded**: Use the MCP list command:
+   ```bash
+   bun dev mcp list
+   ```
+
+2. **Check config file syntax**: Make sure your JSON/JSONC is valid. You can use a JSON validator or check the file manually.
+
+3. **Check for project config override**: If you have an `opencode.json` file in your project directory, it will override the global config. Check if your project config has MCP settings that might be conflicting.
+
+4. **Restart the server**: After making changes, restart the server:
+   ```bash
+   # Stop the current server (Ctrl+C)
+   # Then restart
+   bun dev serve
+   ```
+
+**Common issues:**
+
+- **Config not found**: Make sure the file is at `~/.config/opencode/opencode.json` (not `opencode.json` in the project root)
+- **Config not loaded**: Restart the server after modifying the config
+- **MCP not enabled**: Make sure `"enabled": true` is set (or omit it, as it defaults to true)
+- **Project config override**: Project-level `opencode.json` overrides global config, so check both locations
 
 ### Setting up a Debugger
 
