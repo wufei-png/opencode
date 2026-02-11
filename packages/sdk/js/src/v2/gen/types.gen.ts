@@ -1846,6 +1846,10 @@ export type Config = {
      */
     mcp_timeout?: number
   }
+  /**
+   * Restrict the folder picker to only show these directories. Supports absolute paths and ~ for home directory. When not set, all directories are shown.
+   */
+  allowed_folders?: Array<string>
 }
 
 export type BadRequestError = {

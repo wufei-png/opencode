@@ -41,7 +41,7 @@ export function DialogSelectDirectory(props: DialogSelectDirectoryProps) {
     const folders = allowedFolders()
     if (!folders || folders.length === 0) return undefined
     const h = sync.data.path.home || ""
-    return folders.map((f) => {
+    return folders.map((f: string) => {
       let resolved = f.replaceAll("\\", "/")
       if (resolved === "~") resolved = h
       else if (resolved.startsWith("~/")) resolved = h + resolved.slice(1)

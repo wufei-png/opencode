@@ -29,7 +29,7 @@ export default function Home() {
     if (!folders || folders.length === 0) return undefined
     const h = sync.data.path.home || ""
     return folders
-      .map((f) => {
+      .map((f: string) => {
         let resolved = f.replaceAll("\\", "/")
         if (resolved === "~") resolved = h
         else if (resolved.startsWith("~/")) resolved = h + resolved.slice(1)
@@ -42,7 +42,7 @@ export default function Home() {
     const allowed = resolvedAllowedFolders()
     if (!allowed) return true
     const p = dir.toLowerCase()
-    return allowed.some((a) => {
+    return allowed.some((a: string) => {
       const al = a.toLowerCase()
       return p === al || p.startsWith(al + "/")
     })
