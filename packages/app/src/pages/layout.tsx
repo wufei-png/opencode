@@ -1171,11 +1171,11 @@ export default function Layout(props: ParentProps) {
   const showEditProjectDialog = (project: LocalProject) => dialog.show(() => <DialogEditProject project={project} />)
 
   function isFolderAllowed(dir: string) {
-    const folders = globalSync.data.config.allowed_folders
+    const folders = (globalSync.data.config as { allowed_folders?: string[] }).allowed_folders
     if (!folders || folders.length === 0) return true
     const h = globalSync.data.path.home || ""
     const allowed = folders
-      .map((f) => {
+      .map((f: string) => {
         let resolved = f.replaceAll("\\", "/")
         if (resolved === "~") resolved = h
         else if (resolved.startsWith("~/")) resolved = h + resolved.slice(1)
@@ -1183,7 +1183,7 @@ export default function Layout(props: ParentProps) {
       })
       .filter(Boolean)
     const p = dir.toLowerCase()
-    return allowed.some((a) => {
+    return allowed.some((a: string) => {
       const al = a.toLowerCase()
       return p === al || p.startsWith(al + "/")
     })
